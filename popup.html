@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Screenshot Analysis</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 10px;
+        width: 300px;
+      }
+      textarea {
+        width: 100%;
+        resize: vertical;
+      }
+      #result {
+        margin-top: 10px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Screenshot Analysis</h2>
+    <textarea id="prompt" rows="3" placeholder="Enter your instructions..."></textarea>
+    <br /><br />
+    <button id="capture-btn">Capture & Analyze</button>
+    <div id="result"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

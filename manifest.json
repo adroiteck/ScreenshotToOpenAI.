@@ -1,0 +1,24 @@
+{
+    "name": "Screenshot to OpenAI",
+    "description": "Capture screenshots, run OCR, and send text to OpenAI for analysis.",
+    "version": "1.0.0",
+    "manifest_version": 3,
+    "permissions": [
+      "activeTab",
+      "storage",
+      "scripting"
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "background": {
+      "service_worker": "background.js"
+    },
+    "icons": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    },
+    "options_page": "options.html"
+  }
+  

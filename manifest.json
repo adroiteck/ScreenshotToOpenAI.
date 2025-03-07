@@ -1,24 +1,37 @@
 {
-    "name": "Screenshot to OpenAI",
-    "description": "Capture screenshots, run OCR, and send text to OpenAI for analysis.",
-    "version": "1.0.0",
-    "manifest_version": 3,
-    "permissions": [
-      "activeTab",
-      "storage",
-      "scripting"
-    ],
-    "action": {
-      "default_popup": "popup.html"
-    },
-    "background": {
-      "service_worker": "background.js"
-    },
-    "icons": {
-      "16": "assets/icon16.png",
-      "48": "assets/icon48.png",
-      "128": "assets/icon128.png"
-    },
-    "options_page": "options.html"
+  "name": "ScreenshotToOpenAI",
+  "description": "Capture screenshots and have a ChatGPT-like conversation via a half-screen, resizable overlay with full-screen and region capture.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "commands"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["overlay.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "options_page": "options.html",
+  "commands": {
+    "toggle_overlay": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y"
+      },
+      "description": "Toggle the overlay"
+    }
+  },
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
   }
-  
+}

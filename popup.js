@@ -1,7 +1,7 @@
 document.getElementById("capture-btn").addEventListener("click", () => {
     const prompt = document.getElementById("prompt").value;
     
-    // Send message to background script
+    // Send a message to the background script with the user's prompt.
     chrome.runtime.sendMessage(
       { type: "CAPTURE_AND_ANALYZE", prompt },
       (response) => {

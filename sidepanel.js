@@ -1,5 +1,12 @@
 let openaiApiKey = null;
 
+// Helper function to log runtime errors as warnings
+function logRuntimeError(context) {
+  if (chrome.runtime.lastError && chrome.runtime.lastError.message) {
+    console.warn(context + ": " + chrome.runtime.lastError.message);
+  }
+}
+
 // Load the API key when the extension is installed or updated
 chrome.runtime.onInstalled.addListener(function() {
   chrome.storage.local.get("openaiApiKey", function(data) {
@@ -14,9 +21,9 @@ chrome.storage.onChanged.addListener(function(changes) {
   }
 });
 
-// Listen for the keyboard shortcut command "toggle_overlay"
+// Listen for the keyboard shortcut command
 chrome.commands.onCommand.addListener(function(command) {
-  if (command === "toggle_overlay") {
+  if (command === "toggle_side_panel") {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       if (!tabs || tabs.length === 0) {
         console.warn("No active tab found.");
@@ -27,12 +34,12 @@ chrome.commands.onCommand.addListener(function(command) {
         console.warn("Active tab or its ID is undefined.");
         return;
       }
-      // Only send a message if the URL is supported (http or https)
+      // Check that the active tab's URL is supported (http or https)
       if (activeTab.url &&
           (activeTab.url.indexOf("http://") === 0 || activeTab.url.indexOf("https://") === 0)) {
-        chrome.tabs.sendMessage(activeTab.id, { type: "TOGGLE_OVERLAY" }, function(response) {
+        chrome.tabs.sendMessage(activeTab.id, { type: "TOGGLE_PANEL" }, function(response) {
           if (chrome.runtime.lastError) {
-            console.warn("Could not send toggle overlay message: " + chrome.runtime.lastError.message);
+            console.warn("Could not send toggle message: " + chrome.runtime.lastError.message);
           }
         });
       } else {
@@ -42,7 +49,7 @@ chrome.commands.onCommand.addListener(function(command) {
   }
 });
 
-// Listen for messages from overlay.js
+// Listen for messages from sidepanel.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.type === "CAPTURE_SCREENSHOT") {
     captureScreenshot()
@@ -52,7 +59,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       .catch(function(err) {
         sendResponse({ error: err.message });
       });
-    return true;
+    return true; // asynchronous
   }
 
   if (request.type === "ANALYZE_IMAGE") {
@@ -65,7 +72,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       .catch(function(err) {
         sendResponse({ error: err.message });
       });
-    return true;
+    return true; // asynchronous
   }
 
   if (request.type === "ANALYZE_CONVERSATION") {
@@ -77,7 +84,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       .catch(function(err) {
         sendResponse({ error: err.message });
       });
-    return true;
+    return true; // asynchronous
   }
 });
 
@@ -93,20 +100,17 @@ function captureScreenshot() {
   });
 }
 
-// Send a single image + prompt to OpenAI using a model that supports images (e.g., gpt-4o-mini)
+// Send a single image + prompt to OpenAI
 async function processImageAndAnalyze(imageDataUrl, userPrompt) {
   if (!openaiApiKey) {
     throw new Error("OpenAI API key not set. Please set it in the extension options.");
   }
   const payload = {
-    model: "gpt-4o-mini",
+    model: "gpt-4", // or your vision-capable model
     messages: [
       {
         role: "user",
-        content: [
-          { type: "text", text: userPrompt },
-          { type: "image_url", image_url: { url: imageDataUrl } }
-        ]
+        content: userPrompt + "\n![image](" + imageDataUrl + ")"
       }
     ],
     store: true
@@ -120,8 +124,7 @@ async function processImageAndAnalyze(imageDataUrl, userPrompt) {
     body: JSON.stringify(payload)
   });
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error("OpenAI API error: " + response.status + " - " + errorText);
+    throw new Error("OpenAI API error: " + response.statusText);
   }
   const data = await response.json();
   return data.choices &&
@@ -132,13 +135,13 @@ async function processImageAndAnalyze(imageDataUrl, userPrompt) {
          : "No response.";
 }
 
-// Handle multi-turn conversation using the same model
+// Handle multi-turn conversation
 async function processConversation(conversation) {
   if (!openaiApiKey) {
     throw new Error("OpenAI API key not set.");
   }
   const payload = {
-    model: "gpt-4o-mini",
+    model: "gpt-4", // or whichever vision-capable model you have
     messages: conversation,
     store: true
   };
@@ -151,8 +154,7 @@ async function processConversation(conversation) {
     body: JSON.stringify(payload)
   });
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error("OpenAI API error: " + response.status + " - " + errorText);
+    throw new Error("OpenAI API error: " + response.statusText);
   }
   const data = await response.json();
   return data.choices &&
